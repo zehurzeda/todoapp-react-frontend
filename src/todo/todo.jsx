@@ -17,6 +17,8 @@ export default class Todo extends Component {
         this.refresh = this.refresh.bind(this)
         this.handleRemove = this.handleRemove.bind(this)
         this.handleChangeState = this.handleChangeState.bind(this)
+        this.handleSearch = this.handleSearch.bind(this)
+        this.handleClear = this.handleClear.bind(this)
 
         this.refresh();
     }
@@ -31,18 +33,28 @@ export default class Todo extends Component {
         this.setState({...this.state, description: e.target.value})
     }
     
-    refresh(){
-        Axios.get(`${URL}?sort=-createdAt`)
-            .then(resp => this.setState({...this.state, descriptioin: '', list: resp.data}))
+    refresh(description = ''){
+        const search = description ? `&description__regex=/${description}/` : ''
+        Axios.get(`${URL}?sort=-createdAt${search}`)
+            .then(resp => this.setState({...this.state, description, list: resp.data}))
     }
 
     handleRemove(todo){
-        Axios.delete(`${URL}/${todo._id}`).then(resp => this.refresh())
+        Axios.delete(`${URL}/${todo._id}`)
+            .then(resp => this.refresh(this.state.description))
     }
     
     handleChangeState(todo){
         Axios.put(`${URL}/${todo._id}`, {...todo, done: !todo.done})
-            .then(resp => this.refresh())
+            .then(resp => this.refresh(this.state.description))
+    }
+
+    handleSearch(){
+        this.refresh(this.state.description)
+    }
+
+    handleClear(){
+        this.refresh()
     }
 
     render(){
@@ -52,7 +64,9 @@ export default class Todo extends Component {
                 <TodoForm 
                     description={this.state.description}
                     handleAdd={this.handleAdd}
-                    handleChange={this.handleChange}/>
+                    handleChange={this.handleChange}
+                    handleSearch={this.handleSearch}
+                    handleClear={this.handleClear}/>
                 <TodoList 
                     list={this.state.list} 
                     handleRemove={this.handleRemove}
